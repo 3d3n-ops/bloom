@@ -1,36 +1,145 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bloom - AI-native notebook for students
+
+A beautiful note-taking application with AI-powered live transcription, built with Next.js, Tailwind CSS, and shadcn/ui.
+
+## Features
+
+- 🎨 Beautiful, minimalist design with pink and white gradient backgrounds
+- 📁 Create and organize notebooks/folders for different classes
+- ✍️ Rich text editor with Tiptap (formatting, fonts, images, links)
+- 🔐 User authentication with Clerk
+- 💾 Persistent storage with Supabase
+- 🧭 Collapsible sidebar navigation
+- ✨ Auto-save functionality
+
+## Tech Stack
+
+- **Framework**: Next.js 16
+- **Runtime**: Bun
+- **Styling**: Tailwind CSS 4
+- **UI Components**: shadcn/ui (custom components)
+- **Editor**: Tiptap
+- **Auth**: Clerk
+- **Database**: Supabase
+- **Icons**: Lucide React
+- **TypeScript**: Full type safety
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Bun installed on your system
+- A Clerk account (https://clerk.com)
+- A Supabase account (https://supabase.com)
+
+### Installation
+
+1. Install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+bun install
+```
+
+2. Create a `.env.local` file with your credentials:
+```env
+# Supabase (for database storage)
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key  # Found in Supabase > Settings > API
+
+# Clerk (for authentication)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your-clerk-publishable-key
+CLERK_SECRET_KEY=your-clerk-secret-key
+
+# Clerk redirect URLs
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+
+# AI Transcription (optional)
+GROQ_API_KEY=your-groq-api-key
+OPENROUTER_API_KEY=your-openrouter-api-key
+```
+
+3. Set up Supabase database:
+   - Create a new Supabase project
+   - Run the SQL in `supabase/schema.sql` in the SQL Editor
+
+4. Set up Clerk:
+   - Create a new Clerk application
+   - Enable Google OAuth (optional)
+   - Copy your API keys to `.env.local`
+
+5. Run the development server:
+```bash
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+6. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+bloom-notes/
+├── app/
+│   ├── app/              # Main application routes
+│   │   ├── space/        # My space page
+│   │   ├── folder/[id]/  # Individual folder pages
+│   │   ├── note/         # Note pages (new and edit)
+│   │   ├── settings/     # Settings page
+│   │   └── help/         # Help center
+│   ├── sign-in/          # Clerk sign-in page
+│   ├── sign-up/          # Clerk sign-up page
+│   ├── layout.tsx        # Root layout with ClerkProvider
+│   └── page.tsx          # Landing page
+├── components/
+│   ├── ui/               # Reusable UI components
+│   ├── editor/           # Tiptap editor components
+│   ├── sidebar.tsx       # Navigation sidebar
+│   └── new-folder-modal.tsx # Create folder modal
+├── hooks/
+│   ├── use-folders.ts    # Folders CRUD hook
+│   └── use-notes.ts      # Notes CRUD hook
+├── lib/
+│   ├── supabase/         # Supabase client configuration
+│   └── utils.ts          # Utility functions
+└── supabase/
+    └── schema.sql        # Database schema
+```
 
-## Learn More
+## Pages
 
-To learn more about Next.js, take a look at the following resources:
+- **Landing Page** (`/`): Welcome screen with sign-up button
+- **Sign In** (`/sign-in`): Clerk sign-in page
+- **Sign Up** (`/sign-up`): Clerk sign-up page
+- **Home** (`/app`): Main dashboard with folders and notes
+- **My Space** (`/app/space`): View all folders and notes
+- **Folder** (`/app/folder/[id]`): Notes in a specific folder
+- **New Note** (`/app/note/new`): Create a new note
+- **Edit Note** (`/app/note/[id]`): Edit an existing note
+- **Settings** (`/app/settings`): Application settings
+- **Help Center** (`/app/help`): Help and documentation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Editor Features
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The Tiptap editor includes:
+- **Text Formatting**: Bold, Italic, Underline, Strikethrough
+- **Headings**: H1, H2, H3
+- **Lists**: Bullet and Numbered lists
+- **Font Selection**: Multiple font families
+- **Text Color**: Color picker
+- **Alignment**: Left, Center, Right
+- **Links**: Insert and edit links
+- **Images**: Upload and embed images
+- **Code**: Inline code and code blocks
+- **Quotes**: Block quotes
+- **Highlight**: Text highlighting
 
-## Deploy on Vercel
+## Development
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `bun dev` - Start development server
+- `bun build` - Build for production
+- `bun start` - Start production server
+- `bun lint` - Run ESLint
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+MIT

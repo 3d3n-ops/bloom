@@ -10,7 +10,7 @@ const dmSans = DM_Sans({
   display: "swap",
 })
 
-export default async function LandingPage() {
+export default async function LandingPageB() {
   const { userId } = await auth()
 
   if (userId) {
@@ -18,39 +18,49 @@ export default async function LandingPage() {
   }
 
   return (
-    <div className="landing-page">
+    <div className={`landing-page-b ${dmSans.className}`}>
       {/* Decorative background elements */}
       <div className="bg-orb orb-1" />
       <div className="bg-orb orb-2" />
       <div className="bg-orb orb-3" />
       
-      {/* Hero section */}
-      <header className="landing-header">
+      {/* Top navigation with logo */}
+      <nav className="top-nav">
         <div className="logo-container">
           <span className="logo-emoji">🌸</span>
-          <h1 className={`logo-text ${dmSans.className}`}>Bloom</h1>
+          <span className="logo-text">Bloom</span>
         </div>
+        <div className="nav-actions">
+          <Link href="/sign-in" className="sign-in-link">
+            Sign in
+          </Link>
+          <Link href="/sign-up">
+            <Button className="cta-button-small">
+              Get Started
+            </Button>
+          </Link>
+        </div>
+      </nav>
+
+      {/* Hero section */}
+      <header className="hero-section">
+        <h1 className="hero-headline">
+          Turn notes into knowledge
+          <span className="headline-accent">—automatically</span>
+        </h1>
         
-        <p className={`tagline ${dmSans.className}`}>
-          AI-native notebook for students
+        <p className="hero-subheading">
+          Take notes for class, meetings, or life. Bloom turns them into 
+          structured notes, flashcards, quizzes, and a living knowledge graph.
         </p>
         
         <div className="cta-container">
           <Link href="/sign-up">
-            <Button 
-              size="lg" 
-              className={`cta-button ${dmSans.className}`}
-            >
-              Sign-up
+            <Button size="lg" className="cta-button-primary">
+              Start for free
             </Button>
           </Link>
-          
-          <p className={`sign-in-link ${dmSans.className}`}>
-            Already have an account?{" "}
-            <Link href="/sign-in" className="link">
-              Sign in
-            </Link>
-          </p>
+          <span className="cta-note">No credit card required</span>
         </div>
       </header>
 
@@ -58,7 +68,7 @@ export default async function LandingPage() {
       <LandingCards />
 
       <style>{`
-        .landing-page {
+        .landing-page-b {
           min-height: 100vh;
           background: linear-gradient(
             180deg,
@@ -70,8 +80,6 @@ export default async function LandingPage() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: flex-start;
-          padding: 4rem 2rem 0;
           position: relative;
           overflow: hidden;
         }
@@ -119,59 +127,125 @@ export default async function LandingPage() {
           66% { transform: translate(-20px, 20px) scale(0.95); }
         }
 
-        /* Header */
-        .landing-header {
-          text-align: center;
-          z-index: 10;
-          position: relative;
+        /* Top Navigation */
+        .top-nav {
+          width: 100%;
+          max-width: 1400px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 1.5rem 3rem;
+          z-index: 20;
         }
 
         .logo-container {
           display: flex;
           align-items: center;
-          justify-content: center;
-          gap: 0.75rem;
-          margin-bottom: 1rem;
+          gap: 0.5rem;
         }
 
         .logo-emoji {
-          font-size: 3.5rem;
+          font-size: 2rem;
           animation: gentle-bounce 3s ease-in-out infinite;
         }
 
         @keyframes gentle-bounce {
           0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-8px) rotate(5deg); }
+          50% { transform: translateY(-4px) rotate(3deg); }
         }
 
         .logo-text {
-          font-size: 4.5rem;
+          font-size: 1.75rem;
           font-weight: 700;
           color: #3D0026;
+          letter-spacing: -0.01em;
+        }
+
+        .nav-actions {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+        }
+
+        .sign-in-link {
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: #3D0026;
+          text-decoration: none;
+          transition: color 0.2s;
+        }
+
+        .sign-in-link:hover {
+          color: #d63384;
+        }
+
+        .cta-button-small {
+          background: linear-gradient(135deg, #FF79CB 0%, #FF5BBD 100%);
+          color: white;
+          font-size: 0.9rem;
+          font-weight: 600;
+          padding: 0.6rem 1.5rem;
+          border-radius: 50px;
+          border: none;
+          box-shadow: 0 4px 15px rgba(255, 121, 203, 0.35);
+          transition: all 0.3s ease;
+        }
+
+        .cta-button-small:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(255, 121, 203, 0.45);
+        }
+
+        /* Hero Section */
+        .hero-section {
+          text-align: center;
+          z-index: 10;
+          position: relative;
+          padding: 2rem 2rem 0;
+          max-width: 900px;
+        }
+
+        .hero-headline {
+          font-size: 3.5rem;
+          font-weight: 700;
+          color: #3D0026;
+          line-height: 1.15;
+          margin-bottom: 1.5rem;
           letter-spacing: -0.02em;
         }
 
-        .tagline {
-          font-size: 1.375rem;
-          font-weight: 500;
-          color: #3D0026;
+        .headline-accent {
+          display: block;
+          background: linear-gradient(135deg, #d63384 0%, #FF79CB 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .hero-subheading {
+          font-size: 1.25rem;
+          font-weight: 400;
+          color: #5c4550;
+          line-height: 1.7;
           margin-bottom: 2rem;
-          opacity: 0.9;
+          max-width: 680px;
+          margin-left: auto;
+          margin-right: auto;
         }
 
         .cta-container {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 1rem;
+          gap: 0.75rem;
         }
 
-        .cta-button {
+        .cta-button-primary {
           background: linear-gradient(135deg, #FF79CB 0%, #FF5BBD 100%);
           color: white;
           font-size: 1.125rem;
           font-weight: 600;
-          padding: 0.875rem 2.5rem;
+          padding: 1rem 2.5rem;
           border-radius: 50px;
           border: none;
           box-shadow: 
@@ -181,28 +255,17 @@ export default async function LandingPage() {
           cursor: pointer;
         }
 
-        .cta-button:hover {
+        .cta-button-primary:hover {
           transform: translateY(-2px) scale(1.02);
           box-shadow: 
             0 8px 30px rgba(255, 121, 203, 0.5),
             0 0 0 4px rgba(255, 121, 203, 0.15);
         }
 
-        .sign-in-link {
-          font-size: 0.9rem;
-          color: #6b5058;
-        }
-
-        .sign-in-link .link {
-          color: #d63384;
-          font-weight: 600;
-          text-decoration: none;
-          transition: color 0.2s;
-        }
-
-        .sign-in-link .link:hover {
-          color: #ad2970;
-          text-decoration: underline;
+        .cta-note {
+          font-size: 0.85rem;
+          color: #8a7080;
+          font-weight: 500;
         }
 
         /* Cards container */
@@ -211,7 +274,7 @@ export default async function LandingPage() {
           width: 100%;
           max-width: 1200px;
           height: 550px;
-          margin-top: 3rem;
+          margin-top: 2rem;
           z-index: 5;
         }
 
@@ -429,6 +492,12 @@ export default async function LandingPage() {
 
         /* Responsive */
         @media (max-width: 1024px) {
+          .hero-headline {
+            font-size: 2.75rem;
+          }
+          .hero-subheading {
+            font-size: 1.125rem;
+          }
           .mac-note-card {
             width: 300px;
           }
@@ -438,15 +507,24 @@ export default async function LandingPage() {
         }
 
         @media (max-width: 768px) {
-          .logo-text {
-            font-size: 3.5rem;
+          .top-nav {
+            padding: 1rem 1.5rem;
           }
-          .tagline {
-            font-size: 1.125rem;
+          .logo-text {
+            font-size: 1.5rem;
+          }
+          .hero-headline {
+            font-size: 2.25rem;
+          }
+          .headline-accent {
+            display: inline;
+          }
+          .hero-subheading {
+            font-size: 1rem;
           }
           .cards-container {
             height: 400px;
-            margin-top: 2rem;
+            margin-top: 1.5rem;
           }
           .mac-note-card {
             width: 260px;
@@ -463,7 +541,21 @@ export default async function LandingPage() {
             font-size: 0.75rem;
           }
         }
+
+        @media (max-width: 480px) {
+          .hero-headline {
+            font-size: 1.875rem;
+          }
+          .nav-actions {
+            gap: 1rem;
+          }
+          .cta-button-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+          }
+        }
       `}</style>
     </div>
   )
 }
+
