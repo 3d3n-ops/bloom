@@ -75,7 +75,8 @@ const FOLDER_COLORS = [
 
 export default function KnowledgeGraphPage() {
   const router = useRouter()
-  const graphRef = useRef<{ zoomIn: () => void; zoomOut: () => void; centerAt: (x: number, y: number, ms: number) => void } | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const graphRef = useRef<any>(null)
   
   const [graphData, setGraphData] = useState<GraphData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -335,7 +336,7 @@ export default function KnowledgeGraphPage() {
             </div>
           ) : graphData && (
             <ForceGraph2D
-              ref={graphRef as React.Ref<never>}
+              ref={graphRef}
               width={dimensions.width}
               height={dimensions.height}
               graphData={{

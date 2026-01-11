@@ -103,14 +103,18 @@ export async function GET() {
     }
 
     // Build graph nodes
-    const graphNodes: GraphNode[] = notes.map(note => ({
-      id: note.id,
-      title: note.title,
-      folderId: note.folder_id,
-      folderName: (note.folders as { name: string } | null)?.name || null,
-      hasEmbedding: !!note.embedding,
-      connectionCount: connectionCounts.get(note.id) || 0
-    }))
+    const graphNodes: GraphNode[] = notes.map(note => {
+      // Handle folders relation - Supabase returns object for many-to-one relations
+      const folder = note.folders as unknown as { name: string } | null
+      return {
+        id: note.id,
+        title: note.title,
+        folderId: note.folder_id,
+        folderName: folder?.name || null,
+        hasEmbedding: !!note.embedding,
+        connectionCount: connectionCounts.get(note.id) || 0
+      }
+    })
 
     // Build graph edges
     const graphEdges: GraphEdge[] = connections.map(conn => ({

@@ -27,7 +27,7 @@ export default async function LandingPage() {
       {/* Hero section */}
       <header className="landing-header">
         <div className="logo-container">
-          <span className="logo-emoji">🌸</span>
+          <img src="/bloom-logo.svg" alt="Bloom" className="logo-flower" />
           <h1 className={`logo-text ${dmSans.className}`}>Bloom</h1>
         </div>
         
@@ -134,9 +134,11 @@ export default async function LandingPage() {
           margin-bottom: 1rem;
         }
 
-        .logo-emoji {
-          font-size: 3.5rem;
+        .logo-flower {
+          width: 4rem;
+          height: 4rem;
           animation: gentle-bounce 3s ease-in-out infinite;
+          filter: drop-shadow(0 4px 12px rgba(236, 72, 153, 0.3));
         }
 
         @keyframes gentle-bounce {

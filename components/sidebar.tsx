@@ -48,7 +48,11 @@ export function Sidebar() {
         isDark ? "border-gray-700" : "border-gray-200"
       )}>
         <Link href="/app" className="flex items-center gap-2">
-          <span className="text-2xl">🌸</span>
+          <img 
+            src="/bloom-logo.svg" 
+            alt="Bloom" 
+            className="w-8 h-8"
+          />
           {!isCollapsed && (
             <span 
               className="text-xl font-semibold" 
