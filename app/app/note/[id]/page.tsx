@@ -8,6 +8,9 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useUser } from "@clerk/nextjs"
 import { Note } from "@/lib/supabase/types"
+import { FloatingStudyButton } from "@/components/floating-study-button"
+import { StudyPane } from "@/components/study-pane"
+import { useTheme } from "@/contexts/theme-context"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -21,8 +24,11 @@ export default function NotePage({ params }: PageProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+  const [isStudyPaneOpen, setIsStudyPaneOpen] = useState(false)
   const router = useRouter()
   const { user, isLoaded } = useUser()
+  const { theme } = useTheme()
+  const isDark = theme === "dark"
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -122,7 +128,7 @@ export default function NotePage({ params }: PageProps) {
 
   if (!isLoaded || isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-white via-pink-50/30 to-white">
+      <div className="flex h-screen items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-pink-500" />
       </div>
     )
@@ -130,9 +136,9 @@ export default function NotePage({ params }: PageProps) {
 
   if (!note) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-white via-pink-50/30 to-white">
+      <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">Note not found</p>
+          <p className={isDark ? "text-gray-400 mb-4" : "text-gray-500 mb-4"}>Note not found</p>
           <Link href="/app" className="text-pink-500 hover:underline">
             Go back home
           </Link>
@@ -142,21 +148,31 @@ export default function NotePage({ params }: PageProps) {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-white via-pink-50/30 to-white">
+    <div className="flex h-screen">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <div className="flex items-center justify-between px-8 py-4 border-b border-gray-100 bg-white/80 backdrop-blur-sm">
+        <div className={`flex items-center justify-between px-8 py-4 border-b backdrop-blur-sm ${
+          isDark 
+            ? "border-gray-700 bg-gray-800/80" 
+            : "border-gray-100 bg-white/80"
+        }`}>
           <Link
             href={note.folder_id ? `/app/folder/${note.folder_id}` : "/app"}
-            className="flex items-center gap-2 text-gray-600 hover:text-pink-600 transition-colors"
+            className={`flex items-center gap-2 transition-colors ${
+              isDark 
+                ? "text-gray-400 hover:text-pink-400" 
+                : "text-gray-600 hover:text-pink-600"
+            }`}
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">Back</span>
           </Link>
           <div className="flex items-center gap-2">
             {hasChanges && (
-              <span className="text-xs text-gray-400">Unsaved changes</span>
+              <span className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                Unsaved changes
+              </span>
             )}
             <button
               onClick={handleSave}
@@ -172,7 +188,11 @@ export default function NotePage({ params }: PageProps) {
             </button>
             <button
               onClick={handleDelete}
-              className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+              className={`p-2 rounded-xl transition-colors ${
+                isDark 
+                  ? "text-gray-500 hover:text-red-400 hover:bg-red-900/30" 
+                  : "text-gray-400 hover:text-red-500 hover:bg-red-50"
+              }`}
               title="Delete note"
             >
               <Trash2 className="w-4 h-4" />
@@ -189,7 +209,11 @@ export default function NotePage({ params }: PageProps) {
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
               placeholder="Untitled Note"
-              className="w-full text-4xl font-bold text-gray-900 bg-transparent border-none outline-none mb-6 placeholder:text-gray-300"
+              className={`w-full text-4xl font-bold bg-transparent border-none outline-none mb-6 ${
+                isDark 
+                  ? "text-white placeholder:text-gray-600" 
+                  : "text-gray-900 placeholder:text-gray-300"
+              }`}
             />
 
             {/* Editor */}
@@ -201,6 +225,17 @@ export default function NotePage({ params }: PageProps) {
           </div>
         </main>
       </div>
+
+      {/* Floating Study Button */}
+      <FloatingStudyButton onClick={() => setIsStudyPaneOpen(true)} />
+
+      {/* Study Pane */}
+      <StudyPane
+        isOpen={isStudyPaneOpen}
+        onClose={() => setIsStudyPaneOpen(false)}
+        noteId={id}
+        noteTitle={title || "Untitled Note"}
+      />
     </div>
   )
 }

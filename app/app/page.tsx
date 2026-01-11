@@ -2,15 +2,19 @@
 
 import { Sidebar } from "@/components/sidebar"
 import Link from "next/link"
-import { Plus, Folder, FileText, Loader2 } from "lucide-react"
+import { Plus, Loader2 } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 import { useFolders } from "@/hooks/use-folders"
 import { useNotes } from "@/hooks/use-notes"
+import { NotebookIcon, NoteIcon } from "@/components/ui/notebook-icon"
+import { useTheme } from "@/contexts/theme-context"
 
 export default function AppPage() {
   const { user, isLoaded } = useUser()
   const { folders, loading: foldersLoading } = useFolders()
-  const { notes, loading: notesLoading } = useNotes(null) // Notes without folder
+  const { notes, loading: notesLoading } = useNotes(null)
+  const { theme } = useTheme()
+  const isDark = theme === "dark"
 
   const getUserName = () => {
     if (!user) return "My"
@@ -22,31 +26,41 @@ export default function AppPage() {
 
   if (!isLoaded) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-white via-pink-50/30 to-white">
+      <div className="flex h-screen items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-pink-500" />
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-white via-pink-50/30 to-white">
+    <div className="flex h-screen">
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <main className="flex-1 overflow-auto p-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-8">{getUserName()} space</h1>
+          <h1 className={`text-4xl font-bold mb-8 ${isDark ? "text-white" : "text-gray-900"}`}>
+            {getUserName()} space
+          </h1>
           
-          {/* Folders Section */}
+          {/* Notebooks Section (formerly Folders) */}
           {folders.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">Folders</h2>
-              <div className="flex gap-4 flex-wrap">
+            <div className="mb-10">
+              <h2 className={`text-lg font-semibold mb-5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                Notebooks
+              </h2>
+              <div className="flex gap-6 flex-wrap">
                 {folders.map((folder) => (
                   <Link key={folder.id} href={`/app/folder/${folder.id}`}>
-                    <div className="w-36 h-36 bg-white border border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-pink-400 hover:shadow-lg transition-all duration-300 group cursor-pointer">
-                      <div className="w-12 h-12 rounded-full bg-pink-50 group-hover:bg-pink-100 flex items-center justify-center transition-colors">
-                        <Folder className="h-6 w-6 text-pink-400 group-hover:text-pink-500 transition-colors" />
+                    <div className="flex flex-col items-center gap-3 group cursor-pointer">
+                      {/* Notebook Icon */}
+                      <div className="w-28 h-36 transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
+                        <NotebookIcon className="w-full h-full" />
                       </div>
-                      <span className="text-sm text-gray-700 font-medium text-center px-2 truncate w-full">
+                      {/* Title below */}
+                      <span className={`text-sm font-medium text-center max-w-28 truncate transition-colors ${
+                        isDark 
+                          ? "text-gray-300 group-hover:text-pink-400" 
+                          : "text-gray-700 group-hover:text-pink-600"
+                      }`}>
                         {folder.name}
                       </span>
                     </div>
@@ -58,32 +72,68 @@ export default function AppPage() {
 
           {/* Notes Section */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-700 mb-4">Notes</h2>
-            <div className="flex gap-4 flex-wrap">
+            <h2 className={`text-lg font-semibold mb-5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+              Notes
+            </h2>
+            <div className="flex gap-6 flex-wrap">
+              {/* New Note Button */}
               <Link href="/app/note/new">
-                <button className="w-36 h-44 bg-white border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-pink-400 hover:bg-pink-50 hover:shadow-lg transition-all duration-300 group">
-                  <div className="w-12 h-12 rounded-full bg-gray-100 group-hover:bg-pink-100 flex items-center justify-center transition-colors">
-                    <Plus className="h-6 w-6 text-gray-400 group-hover:text-pink-500 transition-colors" />
+                <div className="flex flex-col items-center gap-3 group cursor-pointer">
+                  <div className={`
+                    w-28 h-36 rounded-xl border-2 border-dashed flex items-center justify-center
+                    transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1
+                    ${isDark 
+                      ? "border-gray-600 bg-gray-800/50 group-hover:border-pink-500 group-hover:bg-gray-700/50" 
+                      : "border-gray-300 bg-white/50 group-hover:border-pink-400 group-hover:bg-pink-50"
+                    }
+                  `}>
+                    <div className={`
+                      w-12 h-12 rounded-full flex items-center justify-center transition-colors
+                      ${isDark 
+                        ? "bg-gray-700 group-hover:bg-pink-900/50" 
+                        : "bg-gray-100 group-hover:bg-pink-100"
+                      }
+                    `}>
+                      <Plus className={`h-6 w-6 transition-colors ${
+                        isDark 
+                          ? "text-gray-400 group-hover:text-pink-400" 
+                          : "text-gray-400 group-hover:text-pink-500"
+                      }`} />
+                    </div>
                   </div>
-                  <span className="text-sm text-gray-600 font-medium group-hover:text-pink-600 transition-colors">New Note</span>
-                </button>
+                  <span className={`text-sm font-medium transition-colors ${
+                    isDark 
+                      ? "text-gray-400 group-hover:text-pink-400" 
+                      : "text-gray-600 group-hover:text-pink-600"
+                  }`}>
+                    New Note
+                  </span>
+                </div>
               </Link>
 
+              {/* Existing Notes */}
               {notes.map((note) => (
                 <Link key={note.id} href={`/app/note/${note.id}`}>
-                  <div className="w-36 h-44 bg-white border border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-pink-400 hover:shadow-lg transition-all duration-300 group cursor-pointer p-4">
-                    <div className="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-pink-50 flex items-center justify-center transition-colors">
-                      <FileText className="h-6 w-6 text-gray-400 group-hover:text-pink-500 transition-colors" />
+                  <div className="flex flex-col items-center gap-3 group cursor-pointer">
+                    {/* Note Icon */}
+                    <div className="w-28 h-36 transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
+                      <NoteIcon className="w-full h-full" />
                     </div>
-                    <span className="text-sm text-gray-700 font-medium text-center truncate w-full">
+                    {/* Title below */}
+                    <span className={`text-sm font-medium text-center max-w-28 truncate transition-colors ${
+                      isDark 
+                        ? "text-gray-300 group-hover:text-pink-400" 
+                        : "text-gray-700 group-hover:text-pink-600"
+                    }`}>
                       {note.title || "Untitled"}
                     </span>
                   </div>
                 </Link>
               ))}
 
+              {/* Loading State */}
               {(foldersLoading || notesLoading) && (
-                <div className="w-36 h-44 flex items-center justify-center">
+                <div className="w-28 h-36 flex items-center justify-center">
                   <Loader2 className="w-6 h-6 animate-spin text-pink-400" />
                 </div>
               )}
@@ -94,4 +144,3 @@ export default function AppPage() {
     </div>
   )
 }
-

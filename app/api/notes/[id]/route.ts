@@ -1,12 +1,33 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { createClient } from "@supabase/supabase-js"
+import { generateNoteEmbedding } from "@/lib/knowledge-graph"
 
 // Create a Supabase client with service role key (bypasses RLS)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
+// Queue for background embedding generation
+// This prevents blocking the response while generating embeddings
+async function queueEmbeddingGeneration(noteId: string, title: string, content: string) {
+  // Generate embedding in the background (fire and forget)
+  generateNoteEmbedding(title, content).then(async (embedding) => {
+    if (embedding) {
+      await supabaseAdmin
+        .from("notes")
+        .update({
+          embedding,
+          embedding_updated_at: new Date().toISOString()
+        })
+        .eq("id", noteId)
+      console.log(`[Embeddings] Generated embedding for note: ${noteId}`)
+    }
+  }).catch((error) => {
+    console.error(`[Embeddings] Failed to generate embedding for note: ${noteId}`, error)
+  })
+}
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -82,6 +103,11 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   if (error) {
     console.error("[API] Note update error:", error)
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // If content was updated, regenerate the embedding in the background
+  if (content !== undefined && data) {
+    queueEmbeddingGeneration(data.id, data.title, data.content)
   }
 
   return NextResponse.json({ data })

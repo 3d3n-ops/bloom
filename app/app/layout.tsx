@@ -1,4 +1,19 @@
+"use client"
+
 import { ProfileSync } from "@/components/profile-sync"
+import { ThemeProvider, useTheme, themeConfig } from "@/contexts/theme-context"
+
+function ThemedLayout({ children }: { children: React.ReactNode }) {
+  const { theme } = useTheme()
+  const config = themeConfig[theme]
+
+  return (
+    <div className={`min-h-screen transition-colors duration-500 ${config.background}`}>
+      <ProfileSync />
+      {children}
+    </div>
+  )
+}
 
 export default function AppLayout({
   children,
@@ -6,10 +21,9 @@ export default function AppLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-pink-100">
-      <ProfileSync />
-      {children}
-    </div>
+    <ThemeProvider>
+      <ThemedLayout>{children}</ThemedLayout>
+    </ThemeProvider>
   )
 }
 
