@@ -122,7 +122,7 @@ export function MenuBar({ editor }: MenuBarProps) {
   const Divider = () => <div className="w-px h-6 bg-gray-200 mx-1" />
 
   return (
-    <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3">
+    <div className="px-4 py-3">
       <div className="flex flex-wrap items-center gap-1">
         {/* Undo/Redo */}
         <MenuButton

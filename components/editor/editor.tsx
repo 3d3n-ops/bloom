@@ -101,7 +101,7 @@ export function Editor({ content = "", onChange, placeholder = "Start writing...
     },
     editorProps: {
       attributes: {
-        class: "prose prose-lg max-w-none focus:outline-none min-h-[400px] px-8 py-6",
+        class: "prose prose-lg max-w-none focus:outline-none px-8 py-6",
       },
     },
   })
@@ -282,9 +282,9 @@ export function Editor({ content = "", onChange, placeholder = "Start writing...
   return (
     <div 
       ref={editorContainerRef}
-      className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative"
+      className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative flex flex-col h-full"
     >
-      <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/50 px-4 py-2">
+      <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-100 bg-gray-50/50 px-4 py-2">
         <MenuBar editor={editor} />
         <RecordingButton
           onTranscription={handleTranscription}
@@ -292,7 +292,9 @@ export function Editor({ content = "", onChange, placeholder = "Start writing...
           onRecordingStop={handleRecordingStop}
         />
       </div>
-      <EditorContent editor={editor} />
+      <div className="flex-1 overflow-y-auto">
+        <EditorContent editor={editor} />
+      </div>
 
       {/* Status indicator */}
       {status && (
@@ -308,7 +310,7 @@ export function Editor({ content = "", onChange, placeholder = "Start writing...
 
       <style jsx global>{`
         .ProseMirror {
-          min-height: 400px;
+          min-height: 100%;
         }
         .ProseMirror p.is-editor-empty:first-child::before {
           color: #9ca3af;

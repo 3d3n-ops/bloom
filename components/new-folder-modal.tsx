@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Modal } from "@/components/ui/modal"
 import { Button } from "@/components/ui/button"
 import { useUser } from "@clerk/nextjs"
+import { NotebookIcon } from "@/components/ui/notebook-icon"
 
 interface NewFolderModalProps {
   isOpen: boolean
@@ -14,39 +15,7 @@ interface NewFolderModalProps {
 // Mini notebook icon for the modal
 function MiniNotebookIcon() {
   return (
-    <div className="relative w-10 h-12">
-      {/* Book spine */}
-      <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gray-800 rounded-l-sm" />
-      
-      {/* Main cover */}
-      <div className="relative bg-gray-900 rounded-r-lg rounded-l-sm overflow-hidden shadow-lg ml-1 h-full">
-        {/* Speckle pattern */}
-        <div className="absolute inset-0 opacity-60">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute bg-white rounded-full"
-              style={{
-                width: `${Math.random() * 2 + 1}px`,
-                height: `${Math.random() * 2 + 1}px`,
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-            />
-          ))}
-        </div>
-        
-        {/* Label area */}
-        <div className="relative z-10 flex items-start justify-center pt-2 px-1">
-          <div className="bg-white rounded w-full py-1 px-0.5">
-            <div className="space-y-0.5">
-              <div className="h-px bg-gray-200 w-full" />
-              <div className="h-px bg-gray-200 w-full" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <NotebookIcon className="w-10 h-12" />
   )
 }
 

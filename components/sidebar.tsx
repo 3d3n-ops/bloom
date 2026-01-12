@@ -43,34 +43,57 @@ export function Sidebar() {
   
   const sidebarContent = (
     <>
-      <div className={cn(
-        "p-6 border-b flex items-center justify-between",
-        isDark ? "border-gray-700" : "border-gray-200"
-      )}>
-        <Link href="/app" className="flex items-center gap-2">
-          <img 
-            src="/bloom-logo.svg" 
-            alt="Bloom" 
-            className="w-8 h-8"
-          />
-          {!isCollapsed && (
-            <span 
-              className="text-xl font-semibold" 
-              style={{ color: isDark ? "#f9a8d4" : "#3D0026" }}
+      <div 
+        className={cn(
+          "border-b flex items-center relative",
+          isDark ? "border-gray-700" : "border-gray-200",
+          isCollapsed ? "justify-center" : "justify-between"
+        )}
+        style={{
+          padding: isCollapsed ? "1rem" : "1.5rem",
+          transition: "padding 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)"
+        }}
+      >
+        {isCollapsed ? (
+          <button
+            onClick={() => setIsCollapsed(false)}
+            className="flex items-center justify-center flex-shrink-0 cursor-pointer"
+          >
+            <img 
+              src="/bloom-logo.svg" 
+              alt="Bloom" 
+              className="w-8 h-8 flex-shrink-0"
+            />
+          </button>
+        ) : (
+          <>
+            <Link href="/app" className="flex items-center gap-2 flex-shrink-0">
+              <img 
+                src="/bloom-logo.svg" 
+                alt="Bloom" 
+                className="w-8 h-8 flex-shrink-0"
+              />
+              <span 
+                className="text-xl font-semibold whitespace-nowrap transition-all duration-300 ease-out"
+                style={{ 
+                  color: isDark ? "#f9a8d4" : "#3D0026",
+                  transition: "opacity 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)"
+                }}
+              >
+                Bloom
+              </span>
+            </Link>
+            <button
+              onClick={() => setIsCollapsed(true)}
+              className={cn(
+                "hidden md:flex p-1 rounded transition-colors flex-shrink-0",
+                isDark ? "hover:bg-gray-700 text-gray-400" : "hover:bg-gray-100"
+              )}
             >
-              Bloom
-            </span>
-          )}
-        </Link>
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className={cn(
-            "hidden md:flex p-1 rounded transition-colors",
-            isDark ? "hover:bg-gray-700 text-gray-400" : "hover:bg-gray-100"
-          )}
-        >
-          <ChevronLeft className={cn("h-4 w-4 transition-transform", isCollapsed && "rotate-180")} />
-        </button>
+              <ChevronLeft className="h-4 w-4 transition-transform" />
+            </button>
+          </>
+        )}
       </div>
       
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -96,7 +119,16 @@ export function Sidebar() {
                 title={isCollapsed ? item.name : undefined}
               >
                 <item.icon className="h-5 w-5 flex-shrink-0" />
-                {!isCollapsed && <span className="text-sm font-medium">{item.name}</span>}
+                {!isCollapsed && (
+                  <span 
+                    className="text-sm font-medium transition-all duration-300 ease-out"
+                    style={{
+                      transition: "opacity 0.25s cubic-bezier(0.4, 0.0, 0.2, 1) 0.05s, transform 0.25s cubic-bezier(0.4, 0.0, 0.2, 1) 0.05s"
+                    }}
+                  >
+                    {item.name}
+                  </span>
+                )}
               </button>
             )
           }
@@ -170,7 +202,16 @@ export function Sidebar() {
           title={isCollapsed ? "Sign out" : undefined}
         >
           <LogOut className="h-5 w-5 flex-shrink-0" />
-          {!isCollapsed && <span className="text-sm font-medium">Sign out</span>}
+          {!isCollapsed && (
+            <span 
+              className="text-sm font-medium transition-all duration-300 ease-out"
+              style={{
+                transition: "opacity 0.25s cubic-bezier(0.4, 0.0, 0.2, 1) 0.05s, transform 0.25s cubic-bezier(0.4, 0.0, 0.2, 1) 0.05s"
+              }}
+            >
+              Sign out
+            </span>
+          )}
         </button>
       </div>
     </>
@@ -179,11 +220,16 @@ export function Sidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className={cn(
-        "hidden md:flex border-r flex-col h-screen transition-all duration-300",
-        isDark ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200",
-        isCollapsed ? "w-20" : "w-64"
-      )}>
+      <div 
+        className={cn(
+          "hidden md:flex border-r flex-col h-screen",
+          isDark ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200",
+          isCollapsed ? "w-20" : "w-64"
+        )}
+        style={{
+          transition: "width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        }}
+      >
         {sidebarContent}
       </div>
       

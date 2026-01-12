@@ -26,8 +26,12 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
-        <body className={`${dmSans.variable} font-sans antialiased`} style={{ fontFamily: 'var(--font-dm-sans), sans-serif' }}>
+      <html lang="en" suppressHydrationWarning>
+        <body
+          suppressHydrationWarning
+          className={`${dmSans.variable} font-sans antialiased`}
+          style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}
+        >
           {children}
         </body>
       </html>
