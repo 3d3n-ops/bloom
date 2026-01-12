@@ -12,6 +12,11 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "Bloom - AI-native notebook for students",
   description: "Take notes with AI-powered live transcription",
+  icons: {
+    icon: "/bloom-logo.svg",
+    shortcut: "/bloom-logo.svg",
+    apple: "/bloom-logo.svg",
+  },
 };
 
 export default function RootLayout({
