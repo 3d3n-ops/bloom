@@ -41,7 +41,7 @@ export default function SpacePage() {
               <h2 className="text-lg font-semibold text-gray-700 mb-4">Folders</h2>
               <div className="flex gap-4 flex-wrap">
                 {folders.map((folder) => (
-                  <Link key={folder.id} href={`/app/folder/${folder.id}`}>
+                  <Link key={folder.id} href={`/home/folder/${folder.id}`}>
                     <div className="w-36 h-36 bg-white border border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-pink-400 hover:shadow-lg transition-all duration-300 group cursor-pointer">
                       <div className="w-12 h-12 rounded-full bg-pink-50 group-hover:bg-pink-100 flex items-center justify-center transition-colors">
                         <Folder className="h-6 w-6 text-pink-400 group-hover:text-pink-500 transition-colors" />
@@ -60,7 +60,7 @@ export default function SpacePage() {
           <div>
             <h2 className="text-lg font-semibold text-gray-700 mb-4">All Notes</h2>
             <div className="flex gap-4 flex-wrap">
-              <Link href="/app/note/new">
+              <Link href="/home/note/new">
                 <button className="w-36 h-44 bg-white border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-pink-400 hover:bg-pink-50 hover:shadow-lg transition-all duration-300 group">
                   <div className="w-12 h-12 rounded-full bg-gray-100 group-hover:bg-pink-100 flex items-center justify-center transition-colors">
                     <Plus className="h-6 w-6 text-gray-400 group-hover:text-pink-500 transition-colors" />
@@ -70,7 +70,7 @@ export default function SpacePage() {
               </Link>
 
               {notes.map((note) => (
-                <Link key={note.id} href={`/app/note/${note.id}`}>
+                <Link key={note.id} href={`/home/note/${note.id}`}>
                   <div className="w-36 h-44 bg-white border border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-pink-400 hover:shadow-lg transition-all duration-300 group cursor-pointer p-4">
                     <div className="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-pink-50 flex items-center justify-center transition-colors">
                       <FileText className="h-6 w-6 text-gray-400 group-hover:text-pink-500 transition-colors" />

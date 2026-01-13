@@ -49,7 +49,7 @@ export default function AppPage() {
               </h2>
               <div className="flex gap-6 flex-wrap">
                 {folders.map((folder, index) => (
-                  <Link key={folder.id} href={`/app/folder/${folder.id}`}>
+                  <Link key={folder.id} href={`/home/folder/${folder.id}`}>
                     <div className="flex flex-col items-center gap-3 group cursor-pointer">
                       {/* Notebook Icon */}
                       <div className="w-28 h-36 transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
@@ -77,7 +77,7 @@ export default function AppPage() {
             </h2>
             <div className="flex gap-6 flex-wrap">
               {/* New Note Button */}
-              <Link href="/app/note/new">
+              <Link href="/home/note/new">
                 <div className="flex flex-col items-center gap-3 group cursor-pointer">
                   <div className={`
                     w-28 h-36 rounded-xl border-2 border-dashed flex items-center justify-center
@@ -113,7 +113,7 @@ export default function AppPage() {
 
               {/* Existing Notes */}
               {notes.map((note, index) => (
-                <Link key={note.id} href={`/app/note/${note.id}`}>
+                <Link key={note.id} href={`/home/note/${note.id}`}>
                   <div className="flex flex-col items-center gap-3 group cursor-pointer">
                     {/* Note Icon */}
                     <div className="w-28 h-36 transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">

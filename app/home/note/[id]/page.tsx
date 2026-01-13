@@ -108,7 +108,7 @@ export default function NotePage({ params }: PageProps) {
       })
 
       if (response.ok) {
-        router.push(note?.folder_id ? `/app/folder/${note.folder_id}` : "/app")
+        router.push(note?.folder_id ? `/home/folder/${note.folder_id}` : "/home")
       }
     } catch (err) {
       console.error("[Delete] Error:", err)
@@ -139,7 +139,7 @@ export default function NotePage({ params }: PageProps) {
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <p className={isDark ? "text-gray-400 mb-4" : "text-gray-500 mb-4"}>Note not found</p>
-          <Link href="/app" className="text-pink-500 hover:underline">
+          <Link href="/home" className="text-pink-500 hover:underline">
             Go back home
           </Link>
         </div>
@@ -156,7 +156,7 @@ export default function NotePage({ params }: PageProps) {
           isDark ? "bg-gray-800/50" : "bg-white/50"
         } backdrop-blur-sm`}>
           <Link
-            href={note.folder_id ? `/app/folder/${note.folder_id}` : "/app"}
+            href={note.folder_id ? `/home/folder/${note.folder_id}` : "/app"}
             className={`p-2 rounded-lg transition-colors ${
               isDark 
                 ? "text-gray-400 hover:text-pink-400 hover:bg-gray-700/50" 

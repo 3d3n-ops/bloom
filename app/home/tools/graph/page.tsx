@@ -108,12 +108,28 @@ export default function KnowledgeGraphPage() {
         colorIndex++
       })
       setFolderColors(colorMap)
+
+      // Initialize node positions in a wide spiral pattern for better distribution
+      const nodeCount = data.nodes.length
+      if (nodeCount > 0) {
+        const centerX = 0 // Center at origin, graph will handle positioning
+        const centerY = 0
+        const spacing = 120 // Space between spiral arms
+        
+        data.nodes.forEach((node, i) => {
+          // Spiral pattern: each node placed further out and rotated
+          const angle = i * 0.8 // Rotation per node (golden angle-ish)
+          const radius = spacing * Math.sqrt(i + 1) // Increasing radius
+          node.x = Math.cos(angle) * radius + centerX
+          node.y = Math.sin(angle) * radius + centerY
+        })
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error")
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [dimensions])
 
   // Generate embeddings for all notes
   const generateEmbeddings = useCallback(async () => {
@@ -192,13 +208,56 @@ export default function KnowledgeGraphPage() {
     return base + connectionBonus
   }, [])
 
+  // Configure force simulation after graph data loads - Obsidian-style spread
+  useEffect(() => {
+    if (graphRef.current && graphData) {
+      const fg = graphRef.current
+      
+      // REMOVE the center force - this is what keeps pulling everything to the middle
+      fg.d3Force("center", null)
+      
+      // Configure charge force - strong repulsion to push nodes apart permanently
+      fg.d3Force("charge")?.strength((node: any) => {
+        // Stronger repulsion for nodes with more connections
+        const connectionCount = (node as GraphNode).connectionCount || 0
+        return -1000 - (connectionCount * 150)
+      })
+      
+      // Configure link force - very weak attraction so nodes don't cluster
+      fg.d3Force("link")
+        ?.distance((link: any) => {
+          const edge = link as GraphEdge
+          if (edge.strength === "strong") return 300
+          if (edge.strength === "moderate") return 400
+          return 500
+        })
+        .strength((link: any) => {
+          // Very weak link strength - connections visible but don't pull nodes together
+          const edge = link as GraphEdge
+          if (edge.strength === "strong") return 0.02
+          if (edge.strength === "moderate") return 0.01
+          return 0.005
+        })
+      
+      // Reheat simulation with new configuration
+      fg.d3ReheatSimulation()
+      
+      // After simulation settles, zoom to fit
+      setTimeout(() => {
+        if (graphRef.current) {
+          graphRef.current.zoomToFit(400, 80)
+        }
+      }, 800)
+    }
+  }, [graphData])
+
   // Navigate to note
   const handleNodeClick = useCallback((node: GraphNode) => {
     setSelectedNode(node)
   }, [])
 
   const openNote = useCallback((nodeId: string) => {
-    router.push(`/app/note/${nodeId}`)
+    router.push(`/home/note/${nodeId}`)
   }, [router])
 
   // Check if there are notes without embeddings
@@ -292,21 +351,29 @@ export default function KnowledgeGraphPage() {
               {/* Zoom controls */}
               <div className="flex items-center bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <button 
-                  onClick={() => graphRef.current?.zoomIn()}
+                  onClick={() => {
+                    const currentZoom = graphRef.current?.zoom() || 1
+                    graphRef.current?.zoom(currentZoom * 1.5, 300)
+                  }}
                   className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <ZoomIn className="h-4 w-4" />
                 </button>
                 <div className="w-px h-5 bg-gray-200" />
                 <button 
-                  onClick={() => graphRef.current?.zoomOut()}
+                  onClick={() => {
+                    const currentZoom = graphRef.current?.zoom() || 1
+                    graphRef.current?.zoom(currentZoom * 0.75, 300)
+                  }}
                   className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <ZoomOut className="h-4 w-4" />
                 </button>
                 <div className="w-px h-5 bg-gray-200" />
                 <button 
-                  onClick={() => graphRef.current?.centerAt(0, 0, 400)}
+                  onClick={() => {
+                    graphRef.current?.zoomToFit(400, 50)
+                  }}
                   className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <Maximize2 className="h-4 w-4" />
@@ -373,15 +440,15 @@ export default function KnowledgeGraphPage() {
                 ctx.lineWidth = isSelected ? 2 : 1
                 ctx.stroke()
                 
-                // Draw label if zoomed in enough
-                if (globalScale > 0.8) {
-                  const label = n.title.length > 20 ? n.title.slice(0, 18) + "..." : n.title
-                  const fontSize = Math.max(10, 12 / globalScale)
-                  ctx.font = `${fontSize}px Inter, system-ui, sans-serif`
+                // Draw label - show at lower zoom levels for better visibility
+                if (globalScale > 0.3) {
+                  const label = n.title.length > 25 ? n.title.slice(0, 22) + "..." : n.title
+                  const fontSize = Math.max(8, Math.min(14, 11 / globalScale))
+                  ctx.font = `500 ${fontSize}px Inter, system-ui, sans-serif`
                   ctx.textAlign = "center"
                   ctx.textBaseline = "top"
-                  ctx.fillStyle = "#374151"
-                  ctx.fillText(label, node.x!, node.y! + size + 4)
+                  ctx.fillStyle = "#1f2937"
+                  ctx.fillText(label, node.x!, node.y! + size + 6)
                 }
               }}
               linkColor={(link) => getEdgeColor(link as GraphEdge)}
@@ -392,9 +459,15 @@ export default function KnowledgeGraphPage() {
               onNodeClick={(node) => handleNodeClick(node as GraphNode)}
               onNodeHover={(node) => setHoveredNode(node as GraphNode | null)}
               backgroundColor="transparent"
-              cooldownTicks={100}
+              warmupTicks={100}
+              cooldownTicks={200}
               d3AlphaDecay={0.02}
               d3VelocityDecay={0.3}
+              enableZoomInteraction={true}
+              enablePanInteraction={true}
+              enableNodeDrag={true}
+              minZoom={0.05}
+              maxZoom={8}
             />
           )}
 

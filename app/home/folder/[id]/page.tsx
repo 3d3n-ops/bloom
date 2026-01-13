@@ -52,7 +52,7 @@ export default function FolderPage({ params }: PageProps) {
   const handleDeleteFolder = async () => {
     if (confirm("Are you sure you want to delete this notebook? All notes inside will be moved to your space.")) {
       await deleteFolder(id)
-      router.push("/app")
+      router.push("/home")
     }
   }
 
@@ -72,7 +72,7 @@ export default function FolderPage({ params }: PageProps) {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
               <Link
-                href="/app"
+                href="/home"
                 className={`p-2 rounded-lg transition-colors ${
                   isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"
                 }`}
@@ -98,7 +98,7 @@ export default function FolderPage({ params }: PageProps) {
           
           <div className="flex gap-6 flex-wrap">
             {/* New Note Button */}
-            <Link href={`/app/note/new?folder=${id}`}>
+            <Link href={`/home/note/new?folder=${id}`}>
               <div className="flex flex-col items-center gap-3 group cursor-pointer">
                 <div className={`
                   w-28 h-36 rounded-xl border-2 border-dashed flex items-center justify-center
@@ -134,7 +134,7 @@ export default function FolderPage({ params }: PageProps) {
 
             {/* Existing Notes */}
             {notes.map((note, index) => (
-              <Link key={note.id} href={`/app/note/${note.id}`}>
+              <Link key={note.id} href={`/home/note/${note.id}`}>
                 <div className="flex flex-col items-center gap-3 group cursor-pointer">
                   {/* Note Icon */}
                   <div className="w-28 h-36 transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">

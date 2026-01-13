@@ -31,14 +31,14 @@ export function Sidebar() {
   const isDark = theme === "dark"
 
   const navigation = [
-    { name: "Home", href: "/app", icon: Home, onClick: undefined },
+    { name: "Home", href: "/home", icon: Home, onClick: undefined },
     { name: "New notebook", href: "#", icon: FolderPlus, onClick: () => setShowNewFolderModal(true) },
-    { name: "Knowledge Graph", href: "/app/tools/graph", icon: Network, onClick: undefined },
+    { name: "Knowledge Graph", href: "/home/tools/graph", icon: Network, onClick: undefined },
   ]
 
   const bottomNavigation = [
-    { name: "Settings", href: "/app/settings", icon: Settings },
-    { name: "Help Center", href: "/app/help", icon: HelpCircle },
+    { name: "Settings", href: "/home/settings", icon: Settings },
+    { name: "Help Center", href: "/home/help", icon: HelpCircle },
   ]
   
   const sidebarContent = (
@@ -67,7 +67,7 @@ export function Sidebar() {
           </button>
         ) : (
           <>
-            <Link href="/app" className="flex items-center gap-2 flex-shrink-0">
+            <Link href="/home" className="flex items-center gap-2 flex-shrink-0">
               <img 
                 src="/bloom-logo.svg" 
                 alt="Bloom" 

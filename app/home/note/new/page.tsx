@@ -43,7 +43,7 @@ function NewNoteContent() {
       }
       
       if (result.data) {
-        router.push(`/app/note/${result.data.id}`)
+        router.push(`/home/note/${result.data.id}`)
       }
     } catch (err) {
       console.error("[NewNote] Error creating note:", err)
@@ -89,7 +89,7 @@ function NewNoteContent() {
         {/* Fixed Header - Action Buttons */}
         <div className="flex-shrink-0 flex items-center justify-end gap-2 px-8 py-4 bg-white/50 backdrop-blur-sm">
           <Link
-            href={folderId ? `/app/folder/${folderId}` : "/app"}
+            href={folderId ? `/home/folder/${folderId}` : "/home"}
             className="p-2 rounded-lg text-gray-600 hover:text-pink-600 hover:bg-gray-100 transition-colors"
             title="Back"
           >
