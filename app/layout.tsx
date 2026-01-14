@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/next"
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -33,6 +34,7 @@ export default function RootLayout({
           style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}
         >
           {children}
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>
