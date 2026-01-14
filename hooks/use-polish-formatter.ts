@@ -25,7 +25,7 @@ export function usePolishFormatter({
   const [currentChunk, setCurrentChunk] = useState<number>(-1);
   const [totalChunks, setTotalChunks] = useState<number>(0);
 
-  // Notes waiting to be polished (accumulated from layer 3)
+  // Notes waiting to be polished
   const pendingNotesRef = useRef<string>("");
   // Previously polished content (for context)
   const polishedContextRef = useRef<string>("");

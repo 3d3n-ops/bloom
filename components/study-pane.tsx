@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, Sparkles, RotateCcw, ChevronLeft, ChevronRight, Check, Loader2, BookOpen, Brain } from "lucide-react"
+import { X, Sparkles, RotateCcw, ChevronLeft, ChevronRight, Check, Loader2, BookOpen, Brain, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Flashcard {
@@ -29,15 +29,39 @@ interface StudyPaneProps {
   onClose: () => void
   noteId: string
   noteTitle: string
+  onTranscriptUpdate?: (handler: (text: string, layer: number) => void) => void
+  defaultTab?: TabType
 }
 
-type TabType = "flashcards" | "quiz"
+type TabType = "flashcards" | "quiz" | "transcript"
 
-export function StudyPane({ isOpen, onClose, noteId, noteTitle }: StudyPaneProps) {
-  const [activeTab, setActiveTab] = useState<TabType>("flashcards")
+export function StudyPane({ isOpen, onClose, noteId, noteTitle, onTranscriptUpdate, defaultTab = "transcript" }: StudyPaneProps) {
+  const [activeTab, setActiveTab] = useState<TabType>(defaultTab)
+  
+  // Reset to transcript tab when pane opens
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(defaultTab)
+    }
+  }, [isOpen, defaultTab])
   const [studyContent, setStudyContent] = useState<StudyContent | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [transcript, setTranscript] = useState<string>("")
+  
+  // Expose transcript update handler to parent
+  useEffect(() => {
+    const handleUpdate = (text: string, layer: number) => {
+      if (layer === 1) {
+        // Layer 1 is raw transcription - append
+        setTranscript((prev) => prev + (prev ? " " : "") + text)
+      }
+    }
+    
+    if (onTranscriptUpdate) {
+      onTranscriptUpdate(handleUpdate)
+    }
+  }, [onTranscriptUpdate])
   
   // Flashcard state
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
@@ -181,6 +205,21 @@ export function StudyPane({ isOpen, onClose, noteId, noteTitle }: StudyPaneProps
         {/* Tabs */}
         <div className="flex border-b border-gray-100">
           <button
+            onClick={() => setActiveTab("transcript")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors relative",
+              activeTab === "transcript" 
+                ? "text-pink-600" 
+                : "text-gray-500 hover:text-gray-700"
+            )}
+          >
+            <FileText className="w-4 h-4" />
+            Live Transcript
+            {activeTab === "transcript" && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-pink-500" />
+            )}
+          </button>
+          <button
             onClick={() => setActiveTab("flashcards")}
             className={cn(
               "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors relative",
@@ -214,7 +253,35 @@ export function StudyPane({ isOpen, onClose, noteId, noteTitle }: StudyPaneProps
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-4">
-          {isLoading ? (
+          {/* Transcript Tab */}
+          {activeTab === "transcript" && (
+            <div className="h-full flex flex-col">
+              <div className="flex-1 overflow-y-auto">
+                {transcript ? (
+                  <div 
+                    className="prose prose-sm max-w-none text-gray-700"
+                    dangerouslySetInnerHTML={{ __html: transcript }}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full gap-2">
+                    <FileText className="w-12 h-12 text-gray-300" />
+                    <p className="text-gray-500">No transcript yet</p>
+                    <p className="text-gray-400 text-sm">Start recording to see live transcript</p>
+                  </div>
+                )}
+              </div>
+              {transcript && (
+                <button
+                  onClick={() => setTranscript("")}
+                  className="mt-4 px-4 py-2 text-sm text-gray-600 hover:text-pink-600 hover:bg-pink-50 rounded-lg transition-colors"
+                >
+                  Clear Transcript
+                </button>
+              )}
+            </div>
+          )}
+          
+          {activeTab !== "transcript" && isLoading ? (
             <div className="flex flex-col items-center justify-center h-full gap-4">
               <Loader2 className="w-8 h-8 animate-spin text-pink-500" />
               <p className="text-gray-500 text-sm">Generating study materials...</p>

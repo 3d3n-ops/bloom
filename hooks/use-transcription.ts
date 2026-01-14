@@ -57,7 +57,7 @@ export function useTranscription({ onUpdate }: UseTranscriptionOptions) {
                 const data: TranscriptionUpdate = JSON.parse(line.slice(6));
                 onUpdate(data);
 
-                // Track the formatted notes for context continuity
+                // Track the notes for context continuity (from layer 2)
                 if (data.layer === 2 && data.status === "completed" && data.text) {
                   // Append to running notes context
                   previousNotesRef.current += "\n" + data.text;

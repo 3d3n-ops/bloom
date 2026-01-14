@@ -5,59 +5,64 @@ const groq = new Groq({
 });
 
 /**
- * Layer 3: Deep formatting pass
- * Formats accumulated notes into polished, well-structured content
- * Enriches content with additional context and explanations
+ * Layer 3: Final Cleanup Pass (Groq Llama)
+ * Quick cleanup and formatting fix for all notes after recording stops
+ * Ensures proper list formatting and consistent structure
  */
-export async function formatLayer3(
-  newNotes: string,
-  sessionId: string,
-  previousContext?: string
+export async function cleanupLayer3(
+  notes: string,
+  sessionId: string
 ): Promise<{
-  formattedNotes: string;
+  cleanedNotes: string;
   sessionId: string;
 }> {
-  if (!newNotes || newNotes.trim().length < 10) {
+  if (!notes || notes.trim().length < 20) {
     return {
-      formattedNotes: newNotes,
+      cleanedNotes: notes,
       sessionId,
     };
   }
 
-  const prompt = `Transform these lecture notes into RICH, comprehensive study notes.
+  const prompt = `Clean up and fix formatting issues in these study notes. Ensure proper list formatting and consistent structure.
 
-YOUR GOAL: Take the raw transcript and create beefier, more detailed notes that a student would love to study from.
+## CRITICAL FORMATTING FIXES
 
-ENRICHMENT RULES:
-1. Keep ALL original information but EXPAND on key concepts
-2. Add brief clarifying explanations for technical terms
-3. Include relevant context that helps understanding
-4. Add examples or analogies where helpful
-5. Connect ideas to broader concepts when obvious
-6. Make definitions more complete and clear
+### Lists (MOST IMPORTANT - FIX ALL LIST ISSUES)
+- **Bullet lists**: Use proper <ul><li> structure. Each <li> MUST be inside <ul>
+- **Numbered lists**: Use <ol><li> for sequential items (steps, rankings, numbered points). Each <li> MUST be inside <ol>
+- **NEVER have <li> without a parent <ul> or <ol>**
+- **Nested lists**: Properly nest <ul> or <ol> inside parent <li> elements
+- **Example correct bullet structure:**
+  <ul><li>First item</li><li>Second item<ul><li>Nested item</li></ul></li></ul>
+- **Example correct numbered list:**
+  <ol><li>Step one</li><li>Step two</li><li>Step three</li></ol>
+- **Fix any broken lists**: If you see <li> without <ul> or <ol>, wrap it properly
+- **Convert loose items to lists**: If content looks like a list but isn't formatted, convert it
 
-STRUCTURE:
-- Use <h3> for topics/sections
-- Use <strong> for key terms and definitions
-- Use <ul>/<li> for lists and key points
-- Use <blockquote> for important principles, formulas, or quotes
-- Use <p> for explanatory paragraphs
-- For math, use $...$ inline or $$...$$ for blocks
+### HTML Structure Rules
+- Every <li> must be inside a <ul> or <ol>
+- Never have <li> without a parent list container
+- Use <ul> for unordered/bullet points (multiple related items)
+- Use <ol> for ordered/numbered lists (steps, sequences)
+- Use <p> for paragraphs and single points
+- Use <h3> for major sections
+- Use <strong> for key terms
+- Keep HTML compact - no extra spaces between tags
+- Lists should only be used when there are multiple related items (3+ items)
 
-STYLE:
-- Write like a knowledgeable tutor explaining to a student
-- Be thorough but not verbose - every sentence should add value
-- Make complex ideas accessible
-- Use clear, direct language
+### Cleanup Tasks
+- Fix any broken list structures
+- Convert inappropriate lists to paragraphs (if only 1-2 items, use <p> instead)
+- Ensure all lists are properly formatted
+- Remove duplicate content
+- Fix spacing issues
+- Ensure consistent formatting throughout
+- Balance between lists and paragraphs - don't overuse lists
 
-${previousContext ? `PREVIOUS CONTEXT (for continuity - DO NOT repeat):
-${previousContext.slice(-400)}
----
+## NOTES TO CLEAN UP:
+${notes}
 
-` : ""}RAW NOTES TO ENRICH:
-${newNotes}
-
-Return ONLY the enriched HTML notes. No meta-commentary.`;
+Return ONLY the cleaned HTML. Fix all list formatting issues. Start directly with content.`;
 
   try {
     const response = await groq.chat.completions.create({
@@ -65,27 +70,34 @@ Return ONLY the enriched HTML notes. No meta-commentary.`;
       messages: [
         {
           role: "system",
-          content: "You are an expert note-taker who transforms raw transcripts into rich, comprehensive study materials. You add helpful context, clarifications, and examples while preserving the original content. Your notes are thorough, well-organized, and genuinely useful for learning.",
+          content: "You are an expert at fixing HTML formatting issues in study notes. You ensure proper list structures, fix broken HTML, and maintain consistent formatting. You always use proper <ul>/<li> and <ol>/<li> structures.",
         },
         {
           role: "user",
           content: prompt,
         },
       ],
-      temperature: 0.3,
-      max_tokens: 2500,
+      temperature: 0.1,
+      max_tokens: 2000,
     });
 
-    const formattedNotes = response.choices[0]?.message?.content || newNotes;
+    let cleanedNotes = response.choices[0]?.message?.content || notes;
+
+    // Final cleanup pass
+    cleanedNotes = cleanedNotes
+      .replace(/>\s+</g, '><') // Remove spaces between HTML tags
+      .replace(/\s{2,}/g, ' ') // Replace multiple spaces with single space
+      .replace(/\n\s*\n/g, '\n') // Remove empty lines
+      .trim();
 
     return {
-      formattedNotes: formattedNotes.trim(),
+      cleanedNotes,
       sessionId,
     };
   } catch (error) {
-    console.error("Layer 3 (Groq) formatting error:", error);
+    console.error("Layer 3 (Groq) cleanup error:", error);
     return {
-      formattedNotes: newNotes,
+      cleanedNotes: notes,
       sessionId,
     };
   }

@@ -18,40 +18,51 @@ import Mathematics from "@tiptap/extension-mathematics"
 import "katex/dist/katex.min.css"
 import { MenuBar } from "./menu-bar"
 import { RecordingButton } from "./recording-button"
-import { useBloomFormatter, FormattingLine } from "@/hooks/use-bloom-formatter"
-import { usePolishFormatter, PolishChunk } from "@/hooks/use-polish-formatter"
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 
 interface EditorProps {
   content?: string
   onChange?: (content: string) => void
   placeholder?: string
+  onTranscriptUpdate?: (text: string, layer: number) => void
+  onRecordingStart?: () => void
 }
 
-// Track content ranges for each layer
-interface ContentRange {
-  start: number
-  end: number
-}
 
-export function Editor({ content = "", onChange, placeholder = "Start writing..." }: EditorProps) {
+export function Editor({ content = "", onChange, placeholder = "Start writing...", onTranscriptUpdate, onRecordingStart }: EditorProps) {
   const [isRecording, setIsRecording] = useState(false)
+  const [isGeneratingNotes, setIsGeneratingNotes] = useState(false)
   const editorContainerRef = useRef<HTMLDivElement>(null)
   
-  // Position tracking for each layer
-  // Layer 2 content accumulates at the end
-  // Layer 3 processes content from layer3StartRef onwards
-  // Layer 4 processes content from layer4StartRef onwards
-  const layer3StartRef = useRef<number>(0)
-  const layer3ProcessingRangeRef = useRef<ContentRange | null>(null)
-  const layer4StartRef = useRef<number>(0)
-  const layer4ProcessingRangeRef = useRef<ContentRange | null>(null)
+  // Buffer transcript for 60 seconds before generating notes
+  const transcriptBufferRef = useRef<string>("")
+  const bufferTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const sessionIdRef = useRef<string>(`session-${Date.now()}`)
+  const previousNotesRef = useRef<string>("")
+  const isRecordingRef = useRef<boolean>(false)
+  
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (bufferTimerRef.current) {
+        clearTimeout(bufferTimerRef.current)
+      }
+    }
+  }, [])
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3],
+        },
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false,
         },
       }),
       Placeholder.configure({
@@ -106,170 +117,193 @@ export function Editor({ content = "", onChange, placeholder = "Start writing...
     },
   })
 
-  // ============ LAYER 4: Polish Formatter (Claude) ============
-  
-  const handleChunkPolished = useCallback((chunk: PolishChunk) => {
-    if (!editor || !layer4ProcessingRangeRef.current) return
-    
-    // Insert polished content at the layer 4 start position
-    // This builds up the polished content progressively
-    const insertPos = layer4StartRef.current
-    editor.commands.insertContentAt(insertPos, chunk.content)
-    
-    // Adjust positions after insertion
-    const insertedLength = editor.state.doc.content.size - (layer4ProcessingRangeRef.current.end - layer4ProcessingRangeRef.current.start) - insertPos
-    layer4StartRef.current = editor.state.doc.content.size - (layer4ProcessingRangeRef.current.end - layer4ProcessingRangeRef.current.start)
-    
-    editor.commands.scrollIntoView()
+  // Layer 2 notes are generated every 60 seconds from transcription API
+  // Layer 3 does final cleanup after recording stops
+
+  // ============ LAYER 1: Transcription -> StudyPane ============
+  // ============ LAYER 2: Notes Generation -> Editor (every 60 seconds) ============
+  // ============ LAYER 3: Final Cleanup -> Editor (after recording stops) ============
+
+  // Process buffered transcript every 60 seconds
+  const processBufferedTranscript = useCallback(async () => {
+    if (!transcriptBufferRef.current.trim() || !editor) {
+      // If no transcript, schedule next check
+      if (isRecordingRef.current) {
+        bufferTimerRef.current = setTimeout(() => {
+          processBufferedTranscript()
+        }, 60000)
+      }
+      return
+    }
+
+    const transcriptToProcess = transcriptBufferRef.current.trim()
+    transcriptBufferRef.current = "" // Clear buffer after processing
+
+    try {
+      setIsGeneratingNotes(true)
+      const response = await fetch("/api/transcribe/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transcript: transcriptToProcess,
+          sessionId: sessionIdRef.current,
+          previousNotes: previousNotesRef.current.slice(-500),
+        }),
+      })
+
+      if (!response.body) throw new Error("No response body")
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value, { stream: true })
+        const lines = chunk.split("\n")
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.slice(6))
+              if (data.layer === 2 && data.status === "completed" && data.text) {
+                // Insert notes into editor
+                editor.commands.focus()
+                const insertPos = editor.state.doc.content.size
+                editor.commands.insertContentAt(insertPos, data.text)
+                editor.commands.scrollIntoView()
+
+                // Track for context
+                previousNotesRef.current += "\n" + data.text
+                if (previousNotesRef.current.length > 1500) {
+                  previousNotesRef.current = previousNotesRef.current.slice(-1500)
+                }
+              }
+            } catch (e) {
+              console.error("Error parsing notes SSE:", e)
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error generating notes:", error)
+    } finally {
+      setIsGeneratingNotes(false)
+      // Schedule next processing cycle if still recording
+      if (isRecordingRef.current) {
+        bufferTimerRef.current = setTimeout(() => {
+          processBufferedTranscript()
+        }, 60000)
+      }
+    }
   }, [editor])
-
-  const handlePolishStart = useCallback(() => {
-    if (!editor) return
-    
-    // Capture the range we're about to process (from layer4Start to layer3Start)
-    // This is content that layer 3 has formatted but layer 4 hasn't polished yet
-    const startPos = layer4StartRef.current
-    const endPos = layer3StartRef.current
-    
-    if (startPos >= endPos) return // Nothing to process
-    
-    layer4ProcessingRangeRef.current = { start: startPos, end: endPos }
-    
-    // Delete the content we're processing - new content is AFTER layer3StartRef
-    editor.chain().focus().deleteRange({ from: startPos, to: endPos }).run()
-    
-    // Adjust layer3Start since we deleted content before it
-    const deletedLength = endPos - startPos
-    layer3StartRef.current -= deletedLength
-    
-    editorContainerRef.current?.classList.add('bloom-is-polishing')
-  }, [editor])
-
-  const handlePolishComplete = useCallback(() => {
-    if (!editor) return
-    
-    editorContainerRef.current?.classList.remove('bloom-is-polishing')
-    layer4ProcessingRangeRef.current = null
-    
-    // Update layer 4 boundary to current position
-    layer4StartRef.current = layer3StartRef.current
-  }, [editor])
-
-  const {
-    isPolishing,
-    addNotes: addNotesToPolish,
-    startPolishing,
-    stopPolishing,
-    reset: resetPolisher,
-  } = usePolishFormatter({
-    onChunkPolished: handleChunkPolished,
-    onPolishComplete: handlePolishComplete,
-    onPolishStart: handlePolishStart,
-    polishInterval: 30000, // Polish every 30 seconds
-  })
-
-  // ============ LAYER 3: Bloom Formatter (Groq Llama) ============
-
-  const handleLineFormatted = useCallback((line: FormattingLine) => {
-    if (!editor || !layer3ProcessingRangeRef.current) return
-    
-    // Insert formatted content at layer 3 start position
-    const insertPos = layer3StartRef.current
-    editor.commands.insertContentAt(insertPos, line.content)
-    
-    // Track how much we've inserted for layer 4
-    addNotesToPolish(line.content)
-    
-    editor.commands.scrollIntoView()
-  }, [editor, addNotesToPolish])
-
-  const handleFormattingStart = useCallback(() => {
-    if (!editor) return
-    
-    // Capture the range we're processing (from layer3Start to document end)
-    const startPos = layer3StartRef.current
-    const endPos = editor.state.doc.content.size
-    
-    if (startPos >= endPos) return // Nothing to process
-    
-    layer3ProcessingRangeRef.current = { start: startPos, end: endPos }
-    
-    // Delete the raw content we're going to format
-    // New content from layer 2 will be blocked during this operation
-    // but we'll minimize this window
-    editor.chain().focus().deleteRange({ from: startPos, to: endPos }).run()
-    
-    editorContainerRef.current?.classList.add('bloom-is-formatting')
-  }, [editor])
-
-  const handleFormattingComplete = useCallback(() => {
-    if (!editor) return
-    
-    editorContainerRef.current?.classList.remove('bloom-is-formatting')
-    layer3ProcessingRangeRef.current = null
-    
-    // Update layer 3 boundary
-    layer3StartRef.current = editor.state.doc.content.size
-  }, [editor])
-
-  const {
-    isFormatting,
-    addNotes,
-    startFormatting,
-    stopFormatting,
-    reset: resetFormatter,
-  } = useBloomFormatter({
-    onLineFormatted: handleLineFormatted,
-    onFormattingComplete: handleFormattingComplete,
-    onFormattingStart: handleFormattingStart,
-    formatInterval: 60000, // Format every 1 minute
-  })
-
-  // ============ LAYER 1 & 2: Transcription (Always runs) ============
 
   const handleTranscription = useCallback((text: string, layer: number) => {
-    if (!editor || !text) return
+    if (!text) return
 
-    if (layer === 2) {
-      // Always append at the end - never blocked by other layers
-      addNotes(text)
+    if (layer === 1) {
+      // Route layer 1 (raw transcript) to transcript pane
+      onTranscriptUpdate?.(text, layer)
+      
+      // Buffer transcript for 60-second processing
+      transcriptBufferRef.current += (transcriptBufferRef.current ? " " : "") + text
 
-      editor.commands.focus()
-      const insertPos = editor.state.doc.content.size
-      editor.commands.insertContentAt(insertPos, text)
+      // Start timer on first chunk if not already running
+      if (!bufferTimerRef.current && isRecordingRef.current) {
+        bufferTimerRef.current = setTimeout(() => {
+          processBufferedTranscript()
+        }, 60000) // 60 seconds
+      }
     }
-  }, [editor, addNotes])
+  }, [onTranscriptUpdate, processBufferedTranscript])
 
   // ============ Recording Controls ============
 
   const handleRecordingStart = useCallback(() => {
     setIsRecording(true)
-    resetFormatter()
-    resetPolisher()
+    isRecordingRef.current = true
+    // Reset buffers and session
+    transcriptBufferRef.current = ""
+    previousNotesRef.current = ""
+    sessionIdRef.current = `session-${Date.now()}`
+    if (bufferTimerRef.current) {
+      clearTimeout(bufferTimerRef.current)
+      bufferTimerRef.current = null
+    }
+    // Timer will be started when first transcript chunk arrives
+    // Notify parent to open StudyPane
+    onRecordingStart?.()
+  }, [onRecordingStart])
+
+  const handleRecordingStop = useCallback(async () => {
+    setIsRecording(false)
+    isRecordingRef.current = false
     
-    if (editor) {
-      const currentPos = editor.state.doc.content.size
-      layer3StartRef.current = currentPos
-      layer4StartRef.current = currentPos
+    // Process any remaining buffered transcript immediately
+    if (transcriptBufferRef.current.trim()) {
+      if (bufferTimerRef.current) {
+        clearTimeout(bufferTimerRef.current)
+        bufferTimerRef.current = null
+      }
+      await processBufferedTranscript()
     }
     
-    startFormatting()
-    startPolishing()
-  }, [editor, resetFormatter, resetPolisher, startFormatting, startPolishing])
+    // Run Layer 3 final cleanup on all notes
+    if (editor) {
+      const allNotes = editor.getHTML()
+      if (allNotes.trim()) {
+        try {
+          setIsGeneratingNotes(true)
+          const response = await fetch("/api/transcribe/cleanup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              notes: allNotes,
+              sessionId: sessionIdRef.current,
+            }),
+          })
 
-  const handleRecordingStop = useCallback(() => {
-    setIsRecording(false)
-    stopFormatting()
-    stopPolishing()
-  }, [stopFormatting, stopPolishing])
+          if (response.body) {
+            const reader = response.body.getReader()
+            const decoder = new TextDecoder()
+
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) break
+
+              const chunk = decoder.decode(value, { stream: true })
+              const lines = chunk.split("\n")
+
+              for (const line of lines) {
+                if (line.startsWith("data: ")) {
+                  try {
+                    const data = JSON.parse(line.slice(6))
+                    if (data.layer === 3 && data.status === "completed" && data.text) {
+                      // Replace all content with cleaned version
+                      editor.commands.setContent(data.text)
+                      editor.commands.scrollIntoView()
+                    }
+                  } catch (e) {
+                    console.error("Error parsing cleanup SSE:", e)
+                  }
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error running cleanup:", error)
+        } finally {
+          setIsGeneratingNotes(false)
+        }
+      }
+    }
+  }, [processBufferedTranscript, editor])
 
   // Status indicator
   const getStatusIndicator = () => {
-    if (isPolishing) {
-      return { text: "Polishing...", emoji: "✨", color: "bg-purple-500/90" }
-    }
-    if (isFormatting) {
-      return { text: "Formatting...", emoji: "🌸", color: "bg-pink-500/90" }
+    if (isGeneratingNotes) {
+      return { text: "Cleaning up notes...", emoji: "✨", color: "bg-purple-500/90" }
     }
     if (isRecording) {
       return { text: "Recording...", emoji: "", color: "bg-red-500/90" }
@@ -349,8 +383,23 @@ export function Editor({ content = "", onChange, placeholder = "Start writing...
         .ProseMirror ol {
           padding-left: 1.5rem;
           margin-bottom: 1rem;
+          list-style-position: outside;
+        }
+        .ProseMirror ul {
+          list-style-type: disc;
+        }
+        .ProseMirror ol {
+          list-style-type: decimal;
         }
         .ProseMirror li {
+          margin-bottom: 0.25rem;
+          display: list-item;
+        }
+        .ProseMirror ul ul,
+        .ProseMirror ol ol,
+        .ProseMirror ul ol,
+        .ProseMirror ol ul {
+          margin-top: 0.25rem;
           margin-bottom: 0.25rem;
         }
         .ProseMirror blockquote {
@@ -396,76 +445,6 @@ export function Editor({ content = "", onChange, placeholder = "Start writing...
           background-color: #fef08a;
           padding: 0.125rem 0.25rem;
           border-radius: 0.125rem;
-        }
-        
-        /* Bloom cursor - Layer 3 formatting */
-        .bloom-is-formatting .ProseMirror > *:last-child::after {
-          content: '🌸';
-          display: inline-block;
-          margin-left: 0.5rem;
-          font-size: 1.25rem;
-          animation: bloom-bounce 0.5s ease-in-out infinite;
-          vertical-align: middle;
-        }
-        
-        @keyframes bloom-bounce {
-          0%, 100% { 
-            transform: translateY(0) scale(1); 
-            opacity: 1;
-          }
-          50% { 
-            transform: translateY(-3px) scale(1.15); 
-            opacity: 0.9;
-          }
-        }
-        
-        /* Glow effect - Layer 3 */
-        .bloom-is-formatting .ProseMirror > *:last-child {
-          animation: bloom-glow 0.8s ease-out;
-        }
-        
-        @keyframes bloom-glow {
-          0% { 
-            background: linear-gradient(90deg, rgba(236, 72, 153, 0.15), transparent);
-          }
-          100% { 
-            background: transparent;
-          }
-        }
-        
-        /* Polish cursor - Layer 4 polishing */
-        .bloom-is-polishing .ProseMirror > *:last-child::after {
-          content: '✨';
-          display: inline-block;
-          margin-left: 0.5rem;
-          font-size: 1.25rem;
-          animation: sparkle 0.6s ease-in-out infinite;
-          vertical-align: middle;
-        }
-        
-        @keyframes sparkle {
-          0%, 100% { 
-            transform: rotate(0deg) scale(1); 
-            opacity: 1;
-          }
-          50% { 
-            transform: rotate(15deg) scale(1.2); 
-            opacity: 0.8;
-          }
-        }
-        
-        /* Glow effect - Layer 4 */
-        .bloom-is-polishing .ProseMirror > *:last-child {
-          animation: polish-glow 0.8s ease-out;
-        }
-        
-        @keyframes polish-glow {
-          0% { 
-            background: linear-gradient(90deg, rgba(147, 51, 234, 0.15), transparent);
-          }
-          100% { 
-            background: transparent;
-          }
         }
         
         /* Math Extension Styles */

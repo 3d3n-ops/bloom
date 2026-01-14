@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import { transcribeLayer1 } from "@/lib/transcription/layer1";
-import { organizeLayer2 } from "@/lib/transcription/layer2";
 
 export const dynamic = "force-dynamic";
 
@@ -27,10 +26,7 @@ export async function POST(req: NextRequest) {
         const l1Result = await transcribeLayer1(audioFile, chunkId);
         sendUpdate({ layer: 1, status: "completed", text: l1Result.text, chunkId });
 
-        // Layer 2: Quick organization via Groq Llama (fast structuring)
-        sendUpdate({ layer: 2, status: "started", chunkId });
-        const l2Result = await organizeLayer2(l1Result.text, chunkId, previousNotes);
-        sendUpdate({ layer: 2, status: "completed", text: l2Result.organizedNotes, chunkId });
+        // Layer 2 is now processed separately on client side after 60 seconds of buffering
 
         sendUpdate({ status: "finished", chunkId });
         controller.close();

@@ -25,6 +25,7 @@ export default function NotePage({ params }: PageProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   const [isStudyPaneOpen, setIsStudyPaneOpen] = useState(false)
+  const [transcriptHandler, setTranscriptHandler] = useState<((text: string, layer: number) => void) | null>(null)
   const router = useRouter()
   const { user, isLoaded } = useUser()
   const { theme } = useTheme()
@@ -226,6 +227,8 @@ export default function NotePage({ params }: PageProps) {
               content={content}
               onChange={handleContentChange}
               placeholder="Start writing your thoughts..."
+              onTranscriptUpdate={transcriptHandler || undefined}
+              onRecordingStart={() => setIsStudyPaneOpen(true)}
             />
           </div>
         </main>
@@ -240,6 +243,8 @@ export default function NotePage({ params }: PageProps) {
         onClose={() => setIsStudyPaneOpen(false)}
         noteId={id}
         noteTitle={title || "Untitled Note"}
+        onTranscriptUpdate={(handler) => setTranscriptHandler(() => handler)}
+        defaultTab="transcript"
       />
     </div>
   )
